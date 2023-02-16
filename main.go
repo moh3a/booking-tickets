@@ -3,6 +3,8 @@ package main
 import (
 	"booking-ticket/helper"
 	"fmt"
+	"sync"
+	"time"
 )
 
 const conferenceTickets = 50
@@ -10,6 +12,8 @@ const conferenceTickets = 50
 var conferenceName = "Go Conference"
 var remainingTickets uint = 50
 var bookings = make([]User, 0)
+
+var wg = sync.WaitGroup{}
 
 type User struct {
 	firstName       string
@@ -25,6 +29,9 @@ func main() {
 		isValidEmail, isValidName, isValidTicketCount := helper.ValidateUserInput(firstName, lastName, email, userTickets, remainingTickets)
 		if isValidEmail && isValidName && isValidTicketCount {
 			bookTicket(userTickets, firstName, lastName, email)
+			wg.Add(1)
+			go sendTicket(userTickets, firstName, lastName, email)
+
 			printFirstNames()
 			if remainingTickets == 0 {
 				fmt.Println("\nOur conference is booked out. Come back next year.")
@@ -42,6 +49,7 @@ func main() {
 			}
 		}
 	}
+	wg.Wait()
 }
 
 func greetUser() {
@@ -88,6 +96,13 @@ func bookTicket(userTickets uint, firstName string, lastName string, email strin
 		numberOfTickets: userTickets,
 	}
 	bookings = append(bookings, userData)
+	fmt.Printf("\nUser %v booked %v tickets\n. You will receive a confirmation email.\n", firstName, userTickets)
+}
 
-	fmt.Printf("\nUser %v booked %v tickets\nThank you. You will receive a confirmation email.\n", firstName, userTickets)
+func sendTicket(userTickets uint, firstName string, lastName string, email string) {
+	time.Sleep(10 * time.Second)
+	fmt.Println("\n##############################################")
+	fmt.Printf("\n%v %v booked %v tickets\nThank you.\n", firstName, lastName, userTickets)
+	fmt.Println("##############################################")
+	wg.Done()
 }
